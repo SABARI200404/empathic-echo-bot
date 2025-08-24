@@ -3,8 +3,72 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Phone, Mail, Shield, Lock } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 const AuthSection = () => {
+  const { user, signIn } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await signIn(email, password);
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (user) {
+    return (
+      <section className="py-20 px-6 bg-gradient-warm">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="flex justify-center mb-6">
+            <div className="p-4 rounded-full bg-white shadow-warm">
+              <Shield className="w-12 h-12 text-primary" />
+            </div>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+            Welcome Back!
+          </h2>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+            You're already signed in. Access your dashboard to continue your wellness journey.
+          </p>
+          <Button 
+            onClick={() => navigate("/dashboard")} 
+            size="lg"
+            className="bg-primary text-white hover:bg-primary/90"
+          >
+            Go to Dashboard
+          </Button>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-20 px-6 bg-gradient-warm">
       <div className="max-w-4xl mx-auto">
@@ -52,9 +116,13 @@ const AuthSection = () => {
                   />
                 </div>
               </div>
-              <Button variant="default" className="w-full">
+              <Button 
+                variant="default" 
+                className="w-full"
+                onClick={() => navigate("/auth")}
+              >
                 <Phone className="w-4 h-4 mr-2" />
-                Send OTP
+                Get Started
               </Button>
               <p className="text-xs text-muted-foreground text-center">
                 We'll send you a verification code
@@ -73,30 +141,42 @@ const AuthSection = () => {
               <CardTitle className="text-2xl">Email Login</CardTitle>
               <p className="text-muted-foreground">Sign in with your Gmail or email</p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input 
-                  id="email"
-                  type="email"
-                  placeholder="yourname@gmail.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input 
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                />
-              </div>
-              <Button variant="default" className="w-full">
-                <Mail className="w-4 h-4 mr-2" />
-                Sign In
-              </Button>
-              <div className="text-center">
-                <Button variant="link" className="text-sm">
-                  Forgot password?
+            <CardContent>
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input 
+                    id="email"
+                    type="email"
+                    placeholder="yourname@gmail.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input 
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" variant="default" className="w-full" disabled={loading}>
+                  <Mail className="w-4 h-4 mr-2" />
+                  {loading ? "Signing In..." : "Sign In"}
+                </Button>
+              </form>
+              <div className="text-center mt-4">
+                <Button 
+                  variant="link" 
+                  className="text-sm"
+                  onClick={() => navigate("/auth")}
+                >
+                  Need an account? Sign up here
                 </Button>
               </div>
             </CardContent>
